@@ -1,0 +1,7 @@
+# Shop data and the login secret stay on the server, never on GitHub
+data/
+*.db
+__pycache__/
+*.pyc
+.venv/
+venv/

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Reports</h1>
+  <a class="btn" href="{{ url_for('reports_csv') }}">Export 12 months to Excel (CSV)</a></div>
+<form class="filters" method="get">{% include "_month_picker.html" %}</form>
+<div class="grid g2">
+  <div class="card">
+    <h2>Profit &amp; Loss — {{ month|monthname }}</h2>
+    <p class="muted small">{{ s.sales_count }} sales · {{ s.units_sold }} items sold</p>
+    <table class="pl">
+      <tr><td><b>Sales revenue</b></td><td class="num"><b>{{ s.revenue|money }}</b></td></tr>
+      <tr><td class="ind">after discounts given of</td><td class="num muted">{{ s.discounts|money }}</td></tr>
+      <tr><td>Less: cost of clothes sold</td><td class="num">{{ (-s.cogs)|money }}</td></tr>
+      <tr class="total"><td>Gross profit <span class="muted small">({{ '%.1f'|format(s.gross_margin) }}%)</span></td><td class="num">{{ s.gross_profit|money }}</td></tr>
+      <tr><td colspan="2" style="padding-top:12px">Less: expenses</td></tr>
+      {% for r in expcat %}<tr><td class="ind">{{ r.category }}</td><td class="num">{{ (-r.total)|money }}</td></tr>{% endfor %}
+      <tr class="total"><td>Total expenses</td><td class="num">{{ (-s.expenses)|money }}</td></tr>
+      <tr class="grand"><td>NET PROFIT <span class="muted small">({{ '%.1f'|format(s.net_margin) }}%)</span></td>
+        <td class="num {{ 'green' if s.net_profit >= 0 else 'red' }}">{{ s.net_profit|money }}</td></tr>
+    </table>
+    <p class="muted small">Stock bought this month: {{ s.purchases|money }}. Stock counts as a cost only when it is sold.</p>
+  </div>
+  <div>
+    <div class="card"><h2>Best sellers</h2>
+      <div class="table-wrap"><table><thead><tr><th>Product</th><th class="num">Sold</th><th class="num">Revenue</th><th class="num">Profit</th></tr></thead>
+      <tbody>{% for r in best %}<tr><td>{{ r.name }}</td><td class="num">{{ r.qty }}</td><td class="num">{{ r.revenue|money }}</td><td class="num">{{ r.profit|money }}</td></tr>
+      {% else %}<tr><td colspan="4" class="empty">No sales this month.</td></tr>{% endfor %}</tbody></table></div></div>
+    <div class="card"><h2>Sales by category</h2>
+      <div class="table-wrap"><table><thead><tr><th>Category</th><th class="num">Items</th><th class="num">Revenue</th></tr></thead>
+      <tbody>{% for r in bycat %}<tr><td>{{ r.category }}</td><td class="num">{{ r.qty }}</td><td class="num">{{ r.revenue|money }}</td></tr>
+      {% else %}<tr><td colspan="3" class="empty">No sales this month.</td></tr>{% endfor %}</tbody></table></div></div>
+  </div>
+</div>
+<div class="card"><h2>Last 12 months</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Month</th><th class="num">Revenue</th><th class="num hide-sm">Cost of goods</th><th class="num hide-sm">Gross profit</th><th class="num">Expenses</th><th class="num">Net profit</th><th class="num hide-sm">Margin</th><th class="num hide-sm">Stock bought</th></tr></thead>
+    <tbody>{% for x in year %}<tr><td><a href="{{ url_for('reports', month=x.month) }}">{{ x.month|monthname }}</a></td><td class="num">{{ x.revenue|money }}</td>
+      <td class="num hide-sm">{{ x.cogs|money }}</td><td class="num hide-sm">{{ x.gross_profit|money }}</td><td class="num">{{ x.expenses|money }}</td>
+      <td class="num {{ 'green' if x.net_profit > 0 else ('red' if x.net_profit < 0) }}">{{ x.net_profit|money }}</td>
+      <td class="num hide-sm">{{ '%.1f'|format(x.net_margin) }}%</td><td class="num hide-sm">{{ x.purchases|money }}</td></tr>{% endfor %}</tbody>
+    <tfoot><tr><td>Total</td><td class="num">{{ year|sum(attribute='revenue')|money }}</td><td class="num hide-sm">{{ year|sum(attribute='cogs')|money }}</td>
+      <td class="num hide-sm">{{ year|sum(attribute='gross_profit')|money }}</td><td class="num">{{ year|sum(attribute='expenses')|money }}</td>
+      <td class="num">{{ year|sum(attribute='net_profit')|money }}</td><td class="hide-sm"></td><td class="num hide-sm">{{ year|sum(attribute='purchases')|money }}</td></tr></tfoot>
+  </table></div>
+</div>
+{% endblock %}

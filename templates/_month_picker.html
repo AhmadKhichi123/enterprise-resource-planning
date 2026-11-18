@@ -1,0 +1,3 @@
+<div><label for="month">Month</label><select id="month" name="month" onchange="this.form.submit()">
+  {% for m in months %}<option value="{{ m }}" {{ 'selected' if m == month }}>{{ m|monthname }}</option>{% endfor %}
+</select></div>

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}First-time setup{% endblock %}
+{% block content %}
+<div class="logo" aria-hidden="true">👗</div>
+<h1>Welcome</h1>
+<p class="muted center">Set up the shop and the owner's login. This page only appears once.</p>
+<form method="post" class="card">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <h2>Shop details (printed on receipts)</h2>
+  <p><label for="sn">Shop name</label><input id="sn" name="shop_name" required value="{{ form.shop_name or '' }}"></p>
+  <p><label for="sa">Address</label><input id="sa" name="shop_address" value="{{ form.shop_address or '' }}"></p>
+  <p><label for="sp">Phone</label><input id="sp" name="shop_phone" value="{{ form.shop_phone or '' }}"></p>
+  <h2>Owner login</h2>
+  <p><label for="fn">Your name</label><input id="fn" name="full_name" value="{{ form.full_name or '' }}"></p>
+  <p><label for="un">Username</label><input id="un" name="username" required minlength="3" autocomplete="username" value="{{ form.username or '' }}"></p>
+  <p><label for="pw">Password (at least 6 characters)</label><input id="pw" type="password" name="password" required minlength="6" autocomplete="new-password"></p>
+  <p><label for="pw2">Repeat password</label><input id="pw2" type="password" name="password2" required minlength="6" autocomplete="new-password"></p>
+  <button class="btn primary block" type="submit">Create shop</button>
+</form>
+{% endblock %}

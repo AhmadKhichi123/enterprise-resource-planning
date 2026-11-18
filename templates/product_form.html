@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Add product' if new else 'Edit product' }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ 'Add product' if new else 'Edit product' }}</h1>
+  <a class="btn" href="{{ url_for('inventory') if new else url_for('product', pid=pid) }}">Cancel</a></div>
+<form method="post" class="card">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="fields">
+    <div><label for="name">Product name *</label><input id="name" name="name" required value="{{ p.name or '' }}"></div>
+    <div><label for="code">Code {% if new %}(blank = automatic){% endif %}</label><input id="code" name="code" value="{{ p.code or '' }}"></div>
+    <div><label for="category">Category</label><input id="category" name="category" list="cats" value="{{ p.category or '' }}">
+      <datalist id="cats">{% for c in CATEGORIES %}<option value="{{ c }}">{% endfor %}</datalist></div>
+    <div><label for="size">Size</label><input id="size" name="size" list="sizes" value="{{ p.size or '' }}">
+      <datalist id="sizes">{% for c in SIZES %}<option value="{{ c }}">{% endfor %}</datalist></div>
+    <div><label for="color">Colour</label><input id="color" name="color" value="{{ p.color or '' }}"></div>
+  </div>
+  <div class="fields">
+    <div><label for="cost">Cost price (Rs) *</label><input id="cost" name="cost_price" inputmode="decimal" required value="{{ p.cost_price|default('', true) }}"></div>
+    <div><label for="sale">Sale price (Rs) *</label><input id="sale" name="sale_price" inputmode="decimal" required value="{{ p.sale_price|default('', true) }}"></div>
+    <div><label for="rl">Warn when stock is at or below</label><input id="rl" name="reorder_level" inputmode="numeric" value="{{ p.reorder_level }}"></div>
+  </div>
+  {% if new %}
+  <h2>Opening stock</h2>
+  <div class="fields">
+    <div><label for="qty">Quantity</label><input id="qty" name="quantity" inputmode="numeric" value="{{ p.quantity or 0 }}"></div>
+    <div><label for="sup">Supplier</label><input id="sup" name="supplier" value="{{ p.supplier or '' }}"></div>
+    <div><label for="acc">Paid from</label><select id="acc" name="account">{% for a in ACCOUNTS %}<option {{ 'selected' if a == p.account }}>{{ a }}</option>{% endfor %}</select></div>
+  </div>
+  <p><label class="check"><input type="checkbox" name="record_purchase" value="1" {{ 'checked' if p.record_purchase }}>
+    Record this stock as a purchase (takes the money out of the account). Untick if the stock was already in the shop.</label></p>
+  {% endif %}
+  <button class="btn primary" type="submit">Save</button>
+</form>
+{% endblock %}

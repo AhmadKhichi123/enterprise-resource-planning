@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}New Sale{% endblock %}
+{% block content %}
+<div class="page-head"><h1>New Sale</h1></div>
+<div class="pos">
+  <div class="card">
+    <h2>1. Tap a product to add it</h2>
+    <input id="search" type="search" placeholder="Search name, code or colour…" aria-label="Search products" autocomplete="off">
+    <div class="plist" id="plist" role="list" style="margin-top:10px"></div>
+  </div>
+  <form class="card bill" method="post" id="saleform">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="cart" id="cartfield">
+    <h2>2. Bill</h2>
+    <div id="cart" aria-live="polite"><p class="empty" id="emptycart">No items yet.</p></div>
+    <div class="fields" style="margin-top:12px">
+      <div><label for="customer">Customer name</label><input id="customer" name="customer"></div>
+      <div><label for="phone">Phone (for WhatsApp receipt)</label><input id="phone" name="phone" inputmode="tel" placeholder="03xx xxxxxxx"></div>
+      <div><label for="account">Paid by</label><select id="account" name="account">{% for a in ACCOUNTS %}<option>{{ a }}</option>{% endfor %}</select></div>
+      <div><label for="discount">Discount (Rs)</label><input id="discount" name="discount" inputmode="decimal" value="0"></div>
+      <div><label for="date">Date</label><input id="date" type="date" name="date" value="{{ today }}"></div>
+    </div>
+    <div class="totalbox"><div id="subline" class="small"></div><div class="big" id="total">Rs 0</div></div>
+    <button class="btn primary block" type="submit">✔ Complete Sale</button>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const PRODUCTS = {{ products|tojson }};
+const cart = [];
+const fmt = n => (n < 0 ? "-" : "") + "Rs " + Math.abs(Math.round(n)).toLocaleString("en-US");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function renderProducts() {
+  const q = document.getElementById("search").value.toLowerCase().trim();
+  const list = PRODUCTS.filter(p => !q || [p.name, p.code, p.color, p.cat].join(" ").toLowerCase().includes(q));
+  document.getElementById("plist").innerHTML = list.length ? list.map(p => `
+    <div class="prod" role="listitem" tabindex="0" data-id="${p.id}">
+      <div><div class="nm">${esc(p.name)}</div>
+        <div class="small muted">${esc(p.code)} · ${esc(p.size)} · ${esc(p.color)} · ${p.stock} in stock</div></div>
+      <div class="price">${fmt(p.price)}</div></div>`).join("")
+    : '<p class="empty">No products in stock match.</p>';
+}
+function add(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  const line = cart.find(c => c.id === id);
+  if (line) { if (line.qty < p.stock) line.qty++; else alert("Only " + p.stock + " in stock."); }
+  else cart.push({id: p.id, name: p.name + (p.size ? " (" + p.size + ")" : ""), qty: 1, price: p.price, stock: p.stock});
+  renderCart();
+}
+function renderCart() {
+  const el = document.getElementById("cart");
+  if (!cart.length) { el.innerHTML = '<p class="empty">No items yet.</p>'; }
+  else el.innerHTML = '<div class="cart-row small muted"><span>Item</span><span>Qty</span><span>Price</span><span></span></div>' +
+    cart.map((c, i) => `<div class="cart-row">
+      <span>${esc(c.name)}</span>
+      <input aria-label="Quantity" inputmode="numeric" value="${c.qty}" data-i="${i}" data-f="qty">
+      <input aria-label="Price" inputmode="decimal" value="${c.price}" data-i="${i}" data-f="price">
+      <button type="button" class="x" aria-label="Remove ${esc(c.name)}" data-rm="${i}">×</button></div>`).join("");
+  totals();
+}
+function totals() {
+  const sub = cart.reduce((s, c) => s + c.qty * c.price, 0);
+  const disc = parseFloat(document.getElementById("discount").value.replace(/,/g, "")) || 0;
+  const items = cart.reduce((s, c) => s + c.qty, 0);
+  document.getElementById("subline").textContent = `${items} item(s) · Subtotal ${fmt(sub)} · Discount ${fmt(disc)}`;
+  document.getElementById("total").textContent = "TOTAL " + fmt(sub - disc);
+}
+document.getElementById("search").addEventListener("input", renderProducts);
+document.getElementById("discount").addEventListener("input", totals);
+const plist = document.getElementById("plist");
+plist.addEventListener("click", e => { const d = e.target.closest(".prod"); if (d) add(+d.dataset.id); });
+plist.addEventListener("keydown", e => { const d = e.target.closest(".prod"); if (d && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); add(+d.dataset.id); } });
+document.getElementById("cart").addEventListener("click", e => { if (e.target.dataset.rm !== undefined) { cart.splice(+e.target.dataset.rm, 1); renderCart(); } });
+document.getElementById("cart").addEventListener("change", e => {
+  const i = e.target.dataset.i, f = e.target.dataset.f; if (i === undefined) return;
+  let v = parseFloat(e.target.value.replace(/,/g, ""));
+  if (f === "qty") { v = Math.max(1, Math.floor(v || 1)); if (v > cart[i].stock) { alert("Only " + cart[i].stock + " in stock."); v = cart[i].stock; } }
+  else v = Math.max(0, v || 0);
+  cart[i][f] = v; renderCart();
+});
+document.getElementById("saleform").addEventListener("submit", e => {
+  if (!cart.length) { e.preventDefault(); alert("Add at least one item to the bill."); return; }
+  document.getElementById("cartfield").value = JSON.stringify(cart.map(c => ({id: c.id, qty: c.qty, price: c.price})));
+});
+renderProducts();
+</script>
+{% endblock %}

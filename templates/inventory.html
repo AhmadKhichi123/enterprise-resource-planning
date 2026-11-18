@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Inventory{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Inventory</h1>
+    <div class="muted">{{ sv.units }} items in stock · cost {{ sv.cost|money }} · retail value {{ sv.retail|money }}</div></div>
+  {% if user.role == 'owner' %}
+  <div class="actions"><a class="btn primary" href="{{ url_for('product_new') }}">+ Add Product</a>
+    <a class="btn" href="{{ url_for('inventory_csv') }}">Export to Excel (CSV)</a></div>
+  {% endif %}
+</div>
+<form class="filters" method="get">
+  <div><label for="q">Search</label><input id="q" name="q" value="{{ q }}" placeholder="Name, code or colour"></div>
+  <div><label for="cat">Category</label><select id="cat" name="cat">
+    <option>All</option>{% for c in CATEGORIES %}<option {{ 'selected' if c == cat }}>{{ c }}</option>{% endfor %}</select></div>
+  <label class="check"><input type="checkbox" name="low" value="1" {{ 'checked' if low }}> Low stock only</label>
+  <button class="btn" type="submit">Filter</button>
+</form>
+<div class="table-wrap"><table>
+  <thead><tr><th>Code</th><th>Product</th><th class="hide-sm">Category</th><th>Size</th><th class="hide-sm">Colour</th>
+    {% if user.role == 'owner' %}<th class="num hide-sm">Cost</th>{% endif %}<th class="num">Price</th>
+    {% if user.role == 'owner' %}<th class="num hide-sm">Profit/item</th>{% endif %}<th class="num">Stock</th>
+    {% if user.role == 'owner' %}<th class="num hide-sm">Stock value</th>{% endif %}</tr></thead>
+  <tbody>
+  {% for p in products %}
+    <tr class="{{ 'low' if p.quantity <= p.reorder_level }}">
+      <td>{{ p.code }}</td><td><a href="{{ url_for('product', pid=p.id) }}">{{ p.name }}</a></td>
+      <td class="hide-sm">{{ p.category }}</td><td>{{ p.size }}</td><td class="hide-sm">{{ p.color }}</td>
+      {% if user.role == 'owner' %}<td class="num hide-sm">{{ p.cost_price|money }}</td>{% endif %}
+      <td class="num">{{ p.sale_price|money }}</td>
+      {% if user.role == 'owner' %}<td class="num hide-sm">{{ (p.sale_price - p.cost_price)|money }}</td>{% endif %}
+      <td class="num">{{ p.quantity }}{% if p.quantity <= p.reorder_level %} <span class="badge red">low</span>{% endif %}</td>
+      {% if user.role == 'owner' %}<td class="num hide-sm">{{ (p.quantity * p.cost_price)|money }}</td>{% endif %}
+    </tr>
+  {% else %}
+    <tr><td colspan="10" class="empty">No products found.{% if user.role == 'owner' %} <a href="{{ url_for('product_new') }}">Add one →</a>{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Settings</h1></div>
+<div class="grid g2">
+{% if user.role == 'owner' %}
+  <form class="card" method="post">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="shop">
+    <h2>Shop details (on receipts)</h2>
+    <p><label for="sn">Shop name</label><input id="sn" name="shop_name" value="{{ shop.shop_name }}" required></p>
+    <p><label for="sa">Address</label><input id="sa" name="shop_address" value="{{ shop.shop_address }}"></p>
+    <p><label for="sp">Phone</label><input id="sp" name="shop_phone" value="{{ shop.shop_phone }}"></p>
+    <p><label for="sf">Receipt message</label><input id="sf" name="receipt_footer" value="{{ shop.receipt_footer }}"></p>
+    <button class="btn primary" type="submit">Save</button>
+  </form>
+{% endif %}
+  <form class="card" method="post">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="password">
+    <h2>Change my password</h2>
+    <p><label for="o">Current password</label><input id="o" type="password" name="old" autocomplete="current-password" required></p>
+    <p><label for="n">New password</label><input id="n" type="password" name="new" minlength="6" autocomplete="new-password" required></p>
+    <p><label for="n2">Repeat new password</label><input id="n2" type="password" name="new2" minlength="6" autocomplete="new-password" required></p>
+    <button class="btn primary" type="submit">Change password</button>
+  </form>
+</div>
+{% if user.role == 'owner' %}
+<div class="card"><h2>Users</h2>
+  <p class="muted small"><b>Owner</b>: everything. <b>Staff</b>: can make sales, see sales history and check stock, but cannot see costs, profit, expenses or accounts.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Reset password</th><th></th></tr></thead>
+    <tbody>{% for u in users %}<tr><td>{{ u.username }}</td><td>{{ u.full_name or '' }}</td><td><span class="badge">{{ u.role }}</span></td>
+      <td><form class="actions" method="post"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="reset_password"><input type="hidden" name="uid" value="{{ u.id }}">
+        <input type="password" name="password" minlength="6" placeholder="New password" aria-label="New password for {{ u.username }}" style="max-width:170px" required><button class="btn sm" type="submit">Reset</button></form></td>
+      <td>{% if u.id != user.id %}<form class="inline" method="post" onsubmit="return confirm('Delete user {{ u.username }}?')"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="delete_user"><input type="hidden" name="uid" value="{{ u.id }}"><button class="btn sm danger" type="submit">Delete</button></form>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <form method="post" style="margin-top:14px">
+    <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="action" value="add_user">
+    <h2>Add user</h2>
+    <div class="fields">
+      <div><label for="nu">Username</label><input id="nu" name="username" minlength="3" required autocomplete="off"></div>
+      <div><label for="nf">Full name</label><input id="nf" name="full_name"></div>
+      <div><label for="np">Password</label><input id="np" type="password" name="password" minlength="6" required autocomplete="new-password"></div>
+      <div><label for="nr">Role</label><select id="nr" name="role"><option value="staff">Staff</option><option value="owner">Owner</option></select></div>
+    </div>
+    <button class="btn primary" type="submit">Add user</button>
+  </form>
+</div>
+<div class="card"><h2>Backup</h2>
+  <p class="muted">Download a copy of all the shop's data. Keep it on a USB drive or in Google Drive, ideally once a week.</p>
+  <a class="btn" href="{{ url_for('backup') }}">⬇ Download backup</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#8E2C48">
+  <title>{% block title %}{{ shop_name }}{% endblock %} · {{ shop_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
+</head>
+<body>
+{% if user %}
+<header class="topbar">
+  <button class="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="sidenav"
+          onclick="var n=document.getElementById('sidenav');n.classList.toggle('open');this.setAttribute('aria-expanded',n.classList.contains('open'))">☰</button>
+  <a class="brand" href="{{ url_for('dashboard') }}">{{ shop_name }}</a>
+  <span class="who">{{ user.full_name or user.username }} · {{ user.role|capitalize }}</span>
+  <form method="post" action="{{ url_for('logout') }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button type="submit">Log out</button>
+  </form>
+</header>
+<div class="layout">
+  <nav class="side" id="sidenav" aria-label="Main">
+    {% macro link(endpoint, icon, text, also=()) -%}
+      {% set ep = request.endpoint or '' %}
+      <a href="{{ url_for(endpoint) }}" class="{{ 'active' if ep == endpoint or ep in also }}"
+         {% if ep == endpoint %}aria-current="page"{% endif %}><span class="ico" aria-hidden="true">{{ icon }}</span>{{ text }}</a>
+    {%- endmacro %}
+    {% if user.role == 'owner' %}{{ link('dashboard', '🏠', 'Dashboard') }}{% endif %}
+    {{ link('new_sale', '🛍️', 'New Sale') }}
+    {{ link('inventory', '👗', 'Inventory', ('product', 'product_new', 'product_edit')) }}
+    {{ link('sales', '🧾', 'Sales History', ('receipt',)) }}
+    {% if user.role == 'owner' %}
+      {{ link('expenses', '💸', 'Expenses') }}
+      {{ link('accounts', '🏦', 'Accounts') }}
+      {{ link('reports', '📊', 'Reports') }}
+    {% endif %}
+    {{ link('settings', '⚙️', 'Settings') }}
+  </nav>
+  <main>
+{% else %}
+<main class="auth">
+{% endif %}
+    {% for cat, msg in get_flashed_messages(with_categories=true) %}
+      <div class="flash {{ cat }}" role="{{ 'alert' if cat == 'error' else 'status' }}">{{ msg }}</div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+{% if user %}</div>{% endif %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

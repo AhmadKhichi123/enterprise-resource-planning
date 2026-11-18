@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Dashboard</h1><div class="muted">{{ today }}</div></div>
+  <div class="actions"><a class="btn primary" href="{{ url_for('new_sale') }}">+ New Sale</a>
+    <a class="btn" href="{{ url_for('expenses') }}">+ Expense</a></div>
+</div>
+<div class="stats">
+  <div class="stat"><div class="label">Today's sales</div><div class="value">{{ day.revenue|money }}</div>
+    <div class="small muted">{{ day.n }} sale(s) · profit {{ day.gross|money }}</div></div>
+  <div class="stat"><div class="label">This month's revenue</div><div class="value">{{ ms.revenue|money }}</div>
+    <div class="small muted">{{ ms.sales_count }} sales · {{ ms.units_sold }} items</div></div>
+  <div class="stat"><div class="label">This month's net profit</div>
+    <div class="value {{ 'green' if ms.net_profit >= 0 else 'red' }}">{{ ms.net_profit|money }}</div>
+    <div class="small muted">Gross margin {{ '%.1f'|format(ms.gross_margin) }}%</div></div>
+  <div class="stat"><div class="label">This month's expenses</div><div class="value">{{ ms.expenses|money }}</div></div>
+  <div class="stat"><div class="label">Stock value (cost)</div><div class="value">{{ sv.cost|money }}</div>
+    <div class="small muted">{{ sv.units }} items · retail {{ sv.retail|money }}</div></div>
+  <div class="stat"><div class="label">Total money</div><div class="value">{{ bal.values()|sum|money }}</div>
+    <div class="small muted"><a href="{{ url_for('accounts') }}">See accounts →</a></div></div>
+</div>
+<div class="grid g2">
+  <div class="card">
+    <h2>Last 6 months</h2>
+    <div class="chart" role="img" aria-label="Revenue, expenses and net profit for the last 6 months">
+      {% for h in hist %}
+      <div class="col">
+        <div class="bars">
+          <div class="bar b-rev" style="height: {{ (h.revenue / peak * 100)|round(1) }}%" title="Revenue {{ h.revenue|money }}"></div>
+          <div class="bar b-exp" style="height: {{ (h.expenses / peak * 100)|round(1) }}%" title="Expenses {{ h.expenses|money }}"></div>
+          <div class="bar {{ 'b-pos' if h.net_profit >= 0 else 'b-neg' }}" style="height: {{ (h.net_profit|abs / peak * 100)|round(1) }}%" title="Net profit {{ h.net_profit|money }}"></div>
+        </div>
+        <div class="lbl">{{ h.month|shortmonth }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="legend"><span><i class="b-rev"></i>Revenue</span><span><i class="b-exp"></i>Expenses</span>
+      <span><i class="b-pos"></i>Profit</span><span><i class="b-neg"></i>Loss</span></div>
+  </div>
+  <div class="card">
+    <h2>⚠ Low stock — reorder soon</h2>
+    {% if low %}
+    <div class="table-wrap"><table>
+      <thead><tr><th>Product</th><th>Size</th><th class="num">Left</th></tr></thead>
+      <tbody>{% for p in low %}<tr class="low"><td><a href="{{ url_for('product', pid=p.id) }}">{{ p.name }}</a></td><td>{{ p.size }}</td><td class="num">{{ p.quantity }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<p class="empty">All products are well stocked.</p>{% endif %}
+  </div>
+</div>
+<div class="card">
+  <h2>Recent sales</h2>
+  {% if recent %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Date</th><th>Customer</th><th class="hide-sm">Paid by</th><th class="num">Total</th></tr></thead>
+    <tbody>{% for s in recent %}<tr><td><a href="{{ url_for('receipt', sid=s.id) }}">{{ s.id }}</a></td><td class="nowrap">{{ s.date }}</td><td>{{ s.customer or '-' }}</td><td class="hide-sm">{{ s.account }}</td><td class="num">{{ s.total|money }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="empty">No sales yet. <a href="{{ url_for('new_sale') }}">Make the first sale →</a></p>{% endif %}
+</div>
+{% endblock %}

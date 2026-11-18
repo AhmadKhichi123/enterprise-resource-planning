@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Accounts{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Accounts</h1></div>
+<div class="stats">
+  {% for a in ACCOUNTS %}<div class="stat"><div class="label">{{ a }}</div><div class="value {{ 'red' if bal[a] < 0 }}">{{ bal[a]|money }}</div></div>{% endfor %}
+  <div class="stat" style="border-color: var(--primary)"><div class="label">TOTAL</div><div class="value">{{ bal.values()|sum|money }}</div></div>
+</div>
+<div class="grid g2">
+  <form class="card" method="post" action="{{ url_for('account_entry') }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <h2>Add money in / out</h2>
+    <div class="fields">
+      <div><label for="k">Type</label><select id="k" name="kind">
+        <option value="Opening">Opening balance (money already there)</option>
+        <option value="Deposit">Money in (owner deposit / other income)</option>
+        <option value="Withdrawal">Money out (owner withdrawal)</option></select></div>
+      <div><label for="ea">Account</label><select id="ea" name="account">{% for a in ACCOUNTS %}<option>{{ a }}</option>{% endfor %}</select></div>
+      <div><label for="eam">Amount (Rs)</label><input id="eam" name="amount" inputmode="decimal" required></div>
+      <div><label for="ed">Description</label><input id="ed" name="description"></div>
+      <div><label for="edt">Date</label><input id="edt" type="date" name="date" value="{{ today }}" required></div>
+    </div>
+    <button class="btn primary" type="submit">Save</button>
+  </form>
+  <form class="card" method="post" action="{{ url_for('account_transfer') }}">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <h2>Transfer between accounts</h2>
+    <p class="muted small">E.g. depositing the day's cash into the bank.</p>
+    <div class="fields">
+      <div><label for="tf">From</label><select id="tf" name="from">{% for a in ACCOUNTS %}<option>{{ a }}</option>{% endfor %}</select></div>
+      <div><label for="tt">To</label><select id="tt" name="to">{% for a in ACCOUNTS %}<option {{ 'selected' if loop.index == 2 }}>{{ a }}</option>{% endfor %}</select></div>
+      <div><label for="tam">Amount (Rs)</label><input id="tam" name="amount" inputmode="decimal" required></div>
+      <div><label for="tn">Note</label><input id="tn" name="description"></div>
+      <div><label for="tdt">Date</label><input id="tdt" type="date" name="date" value="{{ today }}" required></div>
+    </div>
+    <button class="btn primary" type="submit">Transfer</button>
+  </form>
+</div>
+<h2>Ledger</h2>
+<form class="filters" method="get">
+  <div><label for="acct">Account</label><select id="acct" name="account" onchange="this.form.submit()">
+    <option>All</option>{% for a in ACCOUNTS %}<option {{ 'selected' if a == acc }}>{{ a }}</option>{% endfor %}</select></div>
+  {% include "_month_picker.html" %}
+  <div class="muted">Balance at start of month: <b>{{ start|money }}</b></div>
+</form>
+<div class="table-wrap"><table>
+  <thead><tr><th>Date</th><th>Account</th><th class="hide-sm">Type</th><th>Description</th><th class="num">In</th><th class="num">Out</th><th class="num">Balance</th><th></th></tr></thead>
+  <tbody>{% for r, b in rows %}<tr><td class="nowrap">{{ r.date }}</td><td>{{ r.account }}</td><td class="hide-sm"><span class="badge">{{ r.kind }}</span></td><td>{{ r.description or '' }}</td>
+    <td class="num green">{{ r.amount|money if r.amount >= 0 else '' }}</td><td class="num red">{{ (-r.amount)|money if r.amount < 0 else '' }}</td><td class="num">{{ b|money }}</td>
+    <td>{% if r.ref_table == 'manual' %}<form class="inline" method="post" action="{{ url_for('account_delete', tid=r.id) }}" onsubmit="return confirm('Delete this entry?')">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn sm danger" type="submit" aria-label="Delete entry">✕</button></form>{% endif %}</td></tr>
+  {% else %}<tr><td colspan="8" class="empty">No transactions this month.</td></tr>{% endfor %}</tbody>
+  <tfoot><tr><td colspan="4">Money in {{ tin|money }} · out {{ tout|money }}</td><td colspan="4" class="num">Change {{ (tin - tout)|money }}</td></tr></tfoot>
+</table></div>
+{% endblock %}

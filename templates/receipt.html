@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Receipt #{{ s.id }}{% endblock %}
+{% block content %}
+<div class="page-head no-print">
+  <h1>Receipt #{{ s.id }}</h1>
+  <div class="actions">
+    <button class="btn primary" type="button" onclick="window.print()">🖨 Print</button>
+    <a class="btn" href="{{ wa }}" target="_blank" rel="noopener">💬 Send on WhatsApp</a>
+    <a class="btn" href="{{ url_for('new_sale') }}">+ Next sale</a>
+    {% if user.role == 'owner' %}
+    <form class="inline" method="post" action="{{ url_for('sale_cancel', sid=s.id) }}"
+          onsubmit="return confirm('Cancel sale #{{ s.id }}? Items go back to stock and the money is removed from the account.')">
+      <input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn danger" type="submit">Cancel sale / Return</button></form>
+    {% endif %}
+  </div>
+</div>
+<div class="receipt">
+  <h2>{{ shop_name }}</h2>
+  {% if address %}<div class="c">{{ address }}</div>{% endif %}
+  {% if phone %}<div class="c">{{ phone }}</div>{% endif %}
+  <hr>
+  <div>Receipt #: {{ s.id }}</div>
+  <div>Date: {{ s.date }} {{ s.time or '' }}</div>
+  {% if s.customer %}<div>Customer: {{ s.customer }}</div>{% endif %}
+  {% if s.phone %}<div>Phone: {{ s.phone }}</div>{% endif %}
+  <hr>
+  <table>
+    <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Amount</th></tr></thead>
+    <tbody>{% for i in items %}<tr><td>{{ i.name }}</td><td class="num">{{ i.qty }}</td><td class="num">{{ '{:,.0f}'.format(i.unit_price) }}</td><td class="num">{{ '{:,.0f}'.format(i.qty * i.unit_price) }}</td></tr>{% endfor %}</tbody>
+  </table>
+  <hr>
+  <table>
+    <tr><td>Subtotal</td><td class="num">{{ '{:,.0f}'.format(s.subtotal) }}</td></tr>
+    {% if s.discount %}<tr><td>Discount</td><td class="num">-{{ '{:,.0f}'.format(s.discount) }}</td></tr>{% endif %}
+    <tr><td><b>TOTAL (Rs)</b></td><td class="num"><b>{{ '{:,.0f}'.format(s.total) }}</b></td></tr>
+    <tr><td>Paid by</td><td class="num">{{ s.account }}</td></tr>
+  </table>
+  <hr>
+  <div class="c">{{ footer }}</div>
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{
+  "name": "Boutique ERP",
+  "short_name": "Boutique",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF7F8",
+  "theme_color": "#8E2C48",
+  "icons": [{"src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml"}]
+}
