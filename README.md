@@ -22,6 +22,27 @@ It's built with **Python (Flask)**, **HTML/CSS** and **SQLite**.
 
 ---
 
+## 🌐 Live app (GitHub Pages)
+
+**https://ahmadkhichi123.github.io/enterprise-resource-planning/**
+
+The `docs/` folder holds a **browser edition** that runs directly on GitHub Pages. It has the same screens and the same profit calculations as the Python version.
+On a phone, open the link in Chrome and tap ⋮ → **Add to Home screen** to use it like an app.
+
+**How the two editions differ**
+
+| | Browser edition (`docs/`, GitHub Pages) | Python edition (`app.py`, Flask) |
+|---|---|---|
+| Runs on | GitHub Pages, nothing to install | PythonAnywhere or the shop computer |
+| Where the data is kept | In the browser on each device. Move it between devices with **Settings → Backup / Restore** | One shared database. Phone and computer see the same data |
+| Logins | One password per device | Separate owner and staff logins |
+
+GitHub Pages can only host static web pages, so it cannot run the Python server. If the shop needs live, shared data across several devices, use the Python edition (Option A below).
+
+**Turning on GitHub Pages (one-time):** in the repository go to **Settings → Pages**. Under *Build and deployment* choose **Deploy from a branch**, set branch **main** and folder **/docs**, then click **Save**. The link starts working about a minute later.
+
+---
+
 ## How profit is calculated
 - **Revenue** = sales after discounts
 - **Gross profit** = revenue − cost price of the clothes sold
@@ -80,6 +101,7 @@ It also keeps the data file permanently.
 
 ## Project structure
 ```
+docs/             Browser edition for GitHub Pages (index.html, app.js, style.css)
 app.py            Flask web routes, login, roles, CSRF protection
 store_db.py       Database and business logic (SQLite)
 wsgi.py           Entry point for hosting
